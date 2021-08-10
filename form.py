@@ -17,13 +17,8 @@ class ecg_segment:
         
 
         #annotation  = annotation wfdb class / sample / symbol / value 
-        
-
-        #self.set_value()
-        
-        
-        #segment
-        self.segment = []
+        self.beat,self.non_beat = self.set_annotation()
+        self.seg = self.set_segment(2,144)
     
     
     
@@ -42,7 +37,7 @@ class ecg_segment:
     def plot_all(self):
         plt.plot(np.arange(self.get_record().size),self.get_record(),self.get_annotation()[0],self.get_annotation()[2],"o")
         
-    #set2 
+    #set 
     def set_annotation(self):
         beat_annotations = ['N','L','R','B','A','a','J','S','V','r','F','e','j','n','E','/','f','Q','?']
         none_beat_annotations = ['[','!',']','x','(',')','p','t','u','`','\'','^','|','~','+','s','T','*','D','=','\"','@']
@@ -67,26 +62,35 @@ class ecg_segment:
                 beat = np.append(beat,tmp[i])
             else:
                 non_beat = np.append(non_beat,tmp[i])
-        print(beat)
-        print(beat.T)
         
+        beat = beat[1:].reshape(-1,3)
+        non_beat = non_beat[1:].reshape(-1,3)
+        
+
         return beat,non_beat
-        
-    
-    '''
-    #segment 
+         
     def set_segment(self,type,window):
-        self.segment = []
+        segment = []
         if type==1:
         #window 양으로 자르기
+            '''
             size = self.sample.size // window 
             for i in range(size-1):
-                self.segment.append(self.record[window*i:window*(i+1)-1])
-        #window  -annotation - window 양으로 자르기 
+                segment.append(self.record[window*i:window*(i+1)-1])
+            '''
+        #window  -sample - window 양으로 자르기 
         elif type==2:
-            size = self.annotation.size
+            size = len(self.beat)
             for i in range(size):
-                self.segment.append(self.record[self.sample[i]#sizesize)
-    '''         
-    
+                sepfrom = int(self.beat[i][0])-window
+                septo = int(self.beat[i][0])+window
+
+                if sepfrom <= 0:
+                    continue
+                if septo >= len(self.record):
+                    break
+
+                anno = self.beat[i][1]
+                segment.append(self.record[sepfrom:septo])     
+        return segment
     

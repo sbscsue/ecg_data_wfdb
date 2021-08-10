@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd 
 
-import tensorflow as tf
 
 import wfdb 
 import neurokit2 as nk
@@ -26,10 +25,7 @@ class ecg_segment:
         #segment
         self.segment = []
     
-    #set1
-    def set_value(self):
-        for i in range(self.sample.size):
-            self.value[i] = self.record[self.sample[i]]
+    
     
     #get
     def get_record(self):
@@ -53,13 +49,31 @@ class ecg_segment:
         
         sample = self.annotation.sample
         symbol = self.annotation.symbol
+        value = np.empty(sample.size)
+   
+        for i in range(sample.size):
+            value[i] = self.record[sample[i]]
+        
+        tmp = np.stack((sample,symbol,value),axis=1)
         
 
+
+        beat = np.empty([])
+        non_beat = np.empty([])
+
+
+        for i in range(len(symbol)):
+            if symbol[i] in beat_annotations:
+                beat = np.append(beat,tmp[i])
+            else:
+                non_beat = np.append(non_beat,tmp[i])
+        print(beat)
+        print(beat.T)
         
-        
-        return sample,symbol,value
+        return beat,non_beat
         
     
+    '''
     #segment 
     def set_segment(self,type,window):
         self.segment = []
@@ -73,5 +87,6 @@ class ecg_segment:
             size = self.annotation.size
             for i in range(size):
                 self.segment.append(self.record[self.sample[i]#sizesize)
-                
+    '''         
+    
     

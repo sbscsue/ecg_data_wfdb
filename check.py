@@ -12,12 +12,11 @@ import form as es
 
 
 folder = 'C:\\Users\\KIMSEBIN\\Desktop\\2021\\302vacation\\000lab\\deep\\data\\mitdb'
-file = '100'
+file = '101'
 
 
 ecg = es.ecg_segment(folder,file)
-print(ecg.beat)
-
+ecg.output_segment('output')
 
 # %%
 

@@ -1,13 +1,19 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd 
+
 import os 
+import pickle 
+
 import wfdb 
 import neurokit2 as nk
 
 
 class ecg_segment:
     def __init__(self,folder_path,file_name,sampto=None):
+        self.folder = folder_path
+        self.file = file_name
+
         self.file_path = folder_path+'\\'+file_name
         
         #record value , annotation value 
@@ -66,7 +72,7 @@ class ecg_segment:
         beat = np.empty([])
         non_beat = np.empty([])
 
-
+        cnt = 0
         for i in range(len(symbol)):
             if symbol[i] in beat_annotations:
                 for j in mit_to_aami:
@@ -102,8 +108,46 @@ class ecg_segment:
                     continue
                 if septo >= len(self.record):
                     break
-
-                anno = self.beat[i][1]
-                segment.append(self.record[sepfrom:septo])     
+                
+                
+                segment.append({'record':self.record[sepfrom:septo],
+                                'annotation':self.beat[i][1]
+                                }) 
         return segment
+
+    #output
+    def output_segment(self,dir):
+        aami = ['N','S','V','F','Q']
+
+        path_1 = dir
+        if not os.path.exists(path_1):
+            os.mkdir(path_1)
+        
+        path_2 = path_1+"\\"+self.file
+        os.mkdir(path_2)
+
+        
+        for p in aami:
+            os.mkdir(path_2+"\\"+p)
+        
+
+        
+        n = len(self.seg)
+
+        for i in range(n):
+            ann = self.seg[i]['annotation'] 
+            f = open(path_2+"\\"+ann+"\\"+str(i)+".txt",'wb')
+            pickle.dump(self.seg[i],f)
+            f.close()
+        
+
+
+    
+
+        
+
+        
+
+
+
     

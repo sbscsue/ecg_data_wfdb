@@ -1,8 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd 
-
-
+import os 
 import wfdb 
 import neurokit2 as nk
 
@@ -29,11 +28,13 @@ class ecg_segment:
     def get_annotation(self):
         return [self.sample,self.symbol,self.value]
     
+
     #plot
+    #plot ecg 
     def plot_record(self):
         plt.plot(np.arange(self.get_record().size),self.get_record())
         
-    
+    #plot ecg,annotation
     def plot_all(self):
         plt.plot(np.arange(self.get_record().size),self.get_record(),self.get_annotation()[0],self.get_annotation()[2],"o")
         
@@ -42,6 +43,15 @@ class ecg_segment:
         beat_annotations = ['N','L','R','B','A','a','J','S','V','r','F','e','j','n','E','/','f','Q','?']
         none_beat_annotations = ['[','!',']','x','(',')','p','t','u','`','\'','^','|','~','+','s','T','*','D','=','\"','@']
         
+
+        mit_to_aami = { 'N':['N','L','R','e','j'],
+                        'S':['A','a','J','S'],
+                        'V':['V','E'],
+                        'F':['F'],
+                        'Q':['/','f','Q']
+                       }
+
+
         sample = self.annotation.sample
         symbol = self.annotation.symbol
         value = np.empty(sample.size)
@@ -51,7 +61,7 @@ class ecg_segment:
         
         tmp = np.stack((sample,symbol,value),axis=1)
         
-
+        
 
         beat = np.empty([])
         non_beat = np.empty([])
@@ -59,7 +69,10 @@ class ecg_segment:
 
         for i in range(len(symbol)):
             if symbol[i] in beat_annotations:
-                beat = np.append(beat,tmp[i])
+                for j in mit_to_aami:
+                    if symbol[i] in mit_to_aami[j]:
+                        tmp[i][1] = j
+                        beat = np.append(beat,tmp[i])
             else:
                 non_beat = np.append(non_beat,tmp[i])
         

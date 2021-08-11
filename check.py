@@ -11,12 +11,14 @@ import form as es
 
 
 
-folder = 'C:\\0_sebin\\lab\\deep\\wfdb'
+folder = 'C:\\Users\\KIMSEBIN\\Desktop\\2021\\302vacation\\000lab\\deep\\data\\mitdb'
 file = '100'
 
 
 ecg = es.ecg_segment(folder,file)
-plt.plot(ecg.seg[-1])
-plt.show()
+print(ecg.beat)
+
+
+# %%
 
 # %%

@@ -6,7 +6,7 @@ import os
 import pickle 
 
 import wfdb 
-import neurokit2 as nk
+
 
 
 class ecg_segment:

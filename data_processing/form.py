@@ -136,7 +136,7 @@ class ecg_segment:
 
         for i in range(n):
             ann = self.seg[i]['annotation'] 
-            f = open(path_2+"\\"+ann+"\\"+str(i)+".txt",'wb')
+            f = open(path_2+"\\"+ann+"\\"+ann+"_"+str(i)+".txt",'wb')
             pickle.dump(self.seg[i],f)
             f.close()
         

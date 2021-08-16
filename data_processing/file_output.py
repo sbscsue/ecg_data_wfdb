@@ -16,14 +16,14 @@ file = os.listdir(folder)
 
 
 
-'''
+
 for f in file:
     if f.endswith(".dat"):
         name = f.split(".")
         ecg = es.ecg_segment(folder,name[0])
         ecg.output_segment('output')
         print(name[0]+" "+"finish")
-'''
+
 
 # %%
 

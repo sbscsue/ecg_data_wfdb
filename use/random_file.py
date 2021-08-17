@@ -5,7 +5,7 @@ import random
 #segment file path
 input_path = "C:\\seb\\ecg_detection\\segment\\out2"
 #random segment file output
-output_path = "C:\\seb\\ecg_detection\\segment\\set\\01"
+output_path = "C:\\seb\\ecg_detection\\segment\\set\\0101_ex2"
 
 
 

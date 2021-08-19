@@ -12,6 +12,8 @@ RESULT : 0.39
 Opinion : q비트 학습데이터 15개 -> 테스트 데이터 15개로 돌아가서 더 높게 나온듯 하다
 '''
 
+
+
 model layer
 
 model.add(Conv1D(128,6,input_shape=[288,1],activation='relu'))

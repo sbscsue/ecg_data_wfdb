@@ -24,4 +24,3 @@ new_model = kr.models.load_model("C:\\seb\\ecg_detection\\ecg_data_wfdb\\00_data
 new_model.summary()
 
 
-new_model.evaluate

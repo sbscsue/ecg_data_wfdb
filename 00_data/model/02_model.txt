@@ -1,0 +1,42 @@
+model fit : 500개 랜덤으로 뽑아서 넣음 (q는 15개만)
+            epoch = 20
+acc = 92
+model test:
+
+
+'''
+test01 : N , S, V, F : 500개씩 랜덤 SELECT
+       Q : 15개 전체
+       60퍼는 학습 데이터 40퍼는 테스트 데이터
+RESULT : 0.39
+Opinion : q비트 학습데이터 15개 -> 테스트 데이터 15개로 돌아가서 더 높게 나온듯 하다
+'''
+
+model layer
+
+model.add(Conv1D(128,6,input_shape=[288,1],activation='relu'))
+model.add(MaxPooling1D(pool_size=2))
+model.add(Conv1D(128,6,activation='relu'))
+model.add(MaxPooling1D(pool_size=2))
+model.add(Flatten())
+model.add(Dense(5,activation='softmax'))
+
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+conv1d (Conv1D)              (None, 283, 128)          896       
+_________________________________________________________________
+max_pooling1d (MaxPooling1D) (None, 141, 128)          0         
+_________________________________________________________________
+conv1d_1 (Conv1D)            (None, 136, 128)          98432     
+_________________________________________________________________
+max_pooling1d_1 (MaxPooling1 (None, 68, 128)           0         
+_________________________________________________________________
+flatten (Flatten)            (None, 8704)              0         
+_________________________________________________________________
+dense (Dense)                (None, 5)                 43525     
+=================================================================
+Total params: 142,853
+Trainable params: 142,853
+Non-trainable params: 0
+_________________________________________________________________

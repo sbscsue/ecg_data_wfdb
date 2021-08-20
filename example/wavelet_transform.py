@@ -10,5 +10,11 @@ import wfdb
 import pywt as wt
 
 sys.path.append(os.getcwd())
-from use.segment.open import 
+import use.segment.open as so
 
+
+path="C:\\seb\\ecg_detection\\segment\\01)no_processing\\out2\\F\\109_49.txt"
+ecg= so.file_open(path)
+
+
+plt.plot(ecg['record'])

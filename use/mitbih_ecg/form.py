@@ -2,30 +2,33 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd 
 
-import os 
+import os
+import sys
 import pickle 
 
 import wfdb 
-
+import pywt as wt
 
 
 class ecg_segment:
     def __init__(self,folder_path,file_name,sampto=None):
+        #1. save file path
         self.folder = folder_path
         self.file = file_name
 
         self.file_path = folder_path+'\\'+file_name
         
-        #record value , annotation value 
+        #2. record value , annotation value 
         self.record = wfdb.rdsamp(self.file_path,channels=[0],sampto = sampto)[0].flatten()
+        #annotation  = annotation wfdb class / sample / symbol / value 
         self.annotation = wfdb.rdann(self.file_path,'atr',summarize_labels=True,sampto = sampto)
         
 
-        #annotation  = annotation wfdb class / sample / symbol / value 
+        #3. segement
+        #divide beat and non_beat(wave form)
         self.beat,self.non_beat = self.set_annotation()
+        #seg = use beat
         self.seg = self.set_segment(2,144)
-    
-    
     
     #get
     def get_record(self):
@@ -34,6 +37,7 @@ class ecg_segment:
     def get_annotation(self):
         return [self.sample,self.symbol,self.value]
     
+
 
     #plot
     #plot ecg 
@@ -115,6 +119,12 @@ class ecg_segment:
                                 }) 
         return segment
 
+    #noise removal
+    def noise_removal(self):
+        
+
+
+
     #output
     def output_segment(self,dir,ver):
         aami = ['N','S','V','F','Q']
@@ -159,6 +169,7 @@ class ecg_segment:
                 pickle.dump(self.seg[i],f)
                 f.close()
  
+    
 
 
     

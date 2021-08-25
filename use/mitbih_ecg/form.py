@@ -29,6 +29,8 @@ class ecg_segment:
         self.beat,self.non_beat = self.set_annotation()
         #seg = use beat
         self.seg = self.set_segment(2,144)
+        #sample_seg 
+        self.seg = None
     
     #get
     def get_record(self):
@@ -118,13 +120,40 @@ class ecg_segment:
                                 'annotation':self.beat[i][1]
                                 }) 
         return segment
-
-    #noise removal
-    def noise_removal(self):
         
 
 
 
+
+#output segment to python dictionary 
+#output
+    def output_segment(self,dir):
+        aami = ['N','S','V','F','Q']
+
+        path_1 = dir+"\\type1"
+        if not os.path.exists(path_1):
+            os.mkdir(path_1)
+            
+        path_2 = path_1+"\\"+self.file
+        os.mkdir(path_2)
+
+            
+        for p in aami:
+            os.mkdir(path_2+"\\type1\\"+p)
+            
+
+            
+        n = len(self.seg)
+
+        for i in range(n):
+            record = self.seg[i]['record']
+            ann = self.seg[i]['annotation']
+            data =  pd.DataFrame(record.append(ann))
+            data.to_csv(path_2+"\\type1\\"+ann+"\\"+self.file+"_"+str(i+1)+".csv",header=False,index=False)
+            data.to_csv(path_1+"\\type2\\"+ann+"\\"+self.file+"_"+str(i+1)+".csv",header=False,index=False)
+
+#upgrade to csv file all 
+'''
     #output
     def output_segment(self,dir,ver):
         aami = ['N','S','V','F','Q']
@@ -168,7 +197,9 @@ class ecg_segment:
                 f = open(path_1+"\\"+ann+"\\"+self.file+"_"+str(i+1)+".txt",'wb')
                 pickle.dump(self.seg[i],f)
                 f.close()
- 
+'''
+
+
     
 
 

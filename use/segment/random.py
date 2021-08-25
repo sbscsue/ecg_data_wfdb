@@ -23,7 +23,7 @@ def random_ecg(pick_num,input_folder,output_folder):
 
             dst_path_1 = out1+"\\"+p
             os.makedirs(dst_path_1)
-            
+        
             seg = os.listdir(src_path)
             seg_num = len(seg)
 

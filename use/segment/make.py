@@ -3,31 +3,39 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd 
+
+import pathlib as pthl
 import os
+from os import getcwd,listdir
+from os.path import abspath
 from pathlib import Path
 import sys
-
-import form as es
-
+import time
 
 
+home_path = abspath(getcwd())
+git_path = home_path+"\\ecg_data_wfdb"
 
-
-
-#folder = os.path.dirname(os.path.abspath(__file__))
-#folder = str(Path(folder).parent.parent)
+sys.path.append(git_path)
+import use.mitbih_ecg.form as es
 
 
 
-folder = "C:\\seb\\ecg_detection\\mit_bih"
-file = os.listdir("C:\\seb\\ecg_detection\\mit_bih")
+input_path = abspath(home_path+"\mit_bih")
+output_path = abspath(home_path+"\save")
 
-for f in file:
+files = listdir(input_path)
+for f in files:
     if f.endswith(".dat"):
+        start_time = time.time()
+
         name = f.split(".")
-        ecg = es.ecg_segment(folder,name[0])
-        ecg.output_segment('out1',1)
-        ecg.output_segment('out2',2)
+        ecg = es.ecg_segment(input_path,name[0])
+        print(ecg.file_path)
+        ecg.output_segment(output_path)
+
+        end_time = time.time()
+        print("Process Time: ${2}".format(end_time-start_time))
         print(name[0]+" "+"finish")
 
 

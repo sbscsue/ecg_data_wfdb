@@ -7,8 +7,6 @@ import sys
 import pickle 
 
 import wfdb 
-import pywt as wt
-
 
 class ecg_segment:
     def __init__(self,folder_path,file_name,sampto=None):
@@ -30,7 +28,7 @@ class ecg_segment:
         #seg = use beat
         self.seg = self.set_segment(2,144)
         #sample_seg 
-        self.seg = None
+        self.sample_seg = None
     
     #get
     def get_record(self):
@@ -126,31 +124,37 @@ class ecg_segment:
 
 
 #output segment to python dictionary 
-#output
+#output dir /type1:100,101
     def output_segment(self,dir):
         aami = ['N','S','V','F','Q']
 
-        path_1 = dir+"\\type1"
+        #type1:101,102
+        #type2:n,s,q,r...
+        path_1 = dir+"\\type1\\"+self.file
         if not os.path.exists(path_1):
-            os.mkdir(path_1)
-            
-        path_2 = path_1+"\\"+self.file
-        os.mkdir(path_2)
+            os.makedirs(path_1)
+        if not os.path.exists(path_1+"\\N"):
+            for p in aami:
+                os.makedirs(path_1+"\\"+p)
 
-            
-        for p in aami:
-            os.mkdir(path_2+"\\type1\\"+p)
-            
-
-            
+        path_2 = dir+'\\type2'
+        if not os.path.exists(path_2):
+            os.makedirs(path_2)
+        if not os.path.exists(path_2+"\\N"):
+            for p in aami:
+                os.makedirs(path_2+"\\"+p)
+             
         n = len(self.seg)
 
         for i in range(n):
             record = self.seg[i]['record']
             ann = self.seg[i]['annotation']
-            data =  pd.DataFrame(record.append(ann))
-            data.to_csv(path_2+"\\type1\\"+ann+"\\"+self.file+"_"+str(i+1)+".csv",header=False,index=False)
-            data.to_csv(path_1+"\\type2\\"+ann+"\\"+self.file+"_"+str(i+1)+".csv",header=False,index=False)
+
+            data =  pd.DataFrame(np.append(record,ann))
+            
+            name = self.file+"_"+str(i+1)+".csv"
+            data.to_csv(path_1+"\\"+ann+"\\"+name,header=False,index=False)
+            data.to_csv(path_2+"\\"+ann+"\\"+name,header=False,index=False)
 
 #upgrade to csv file all 
 '''
@@ -162,14 +166,14 @@ class ecg_segment:
         if ver==1:
             path_1 = dir
             if not os.path.exists(path_1):
-                os.mkdir(path_1)
+                os.makedirs(path_1)
             
             path_2 = path_1+"\\"+self.file
-            os.mkdir(path_2)
+            os.makedirs(path_2)
 
             
             for p in aami:
-                os.mkdir(path_2+"\\"+p)
+                os.makedirs(path_2+"\\"+p)
             
 
             
@@ -185,11 +189,11 @@ class ecg_segment:
         if ver==2:
             path_1 = dir
             if not os.path.exists(path_1):
-                os.mkdir(path_1)
+                os.makedirs(path_1)
 
             for p in aami:
                 if not os.path.exists(path_1+"//"+p):
-                    os.mkdir(path_1+"\\"+p)
+                    os.makedirs(path_1+"\\"+p)
             
             n = len(self.seg)
             for i in range(n):

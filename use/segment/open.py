@@ -7,9 +7,10 @@ import matplotlib.pyplot as plt
 from os import listdir
 
 #file open one file 
-def file_open(path):
+def ecgtodf(path):
 
     dir = listdir(path)
+
 
     all = np.ndarray(1)
     n=0
@@ -23,5 +24,4 @@ def file_open(path):
     all=np.resize(all,(n,288))
 
     return all
-file_open("C:\sebin\ecg\pick\model2\\02\\1_all")
 

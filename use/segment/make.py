@@ -1,5 +1,3 @@
-#%%
-
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd 
@@ -23,6 +21,7 @@ import use.mitbih_ecg.form as es
 
 input_path = abspath(home_path+"\mit_bih")
 output_path = abspath(home_path+"\save")
+output_path = output_path+"\\all"
 
 files = listdir(input_path)
 for f in files:
@@ -35,10 +34,7 @@ for f in files:
         ecg.output_segment(output_path)
 
         end_time = time.time()
-        print("Process Time: ${2}".format(end_time-start_time))
+        print("Process Time: {}".format(end_time-start_time))
         print(name[0]+" "+"finish")
 
 
-# %%
-
-# %%

@@ -1,5 +1,3 @@
-#%%
-
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd 
@@ -16,9 +14,9 @@ import time
 home_path = abspath(getcwd())
 git_path = home_path+"\\ecg_data_wfdb"
 sys.path.append(git_path)
-from use.segment.random import random_ecg
+from use.segment.pick import random_ecg
 
-input_folder = abspath(getcwd()+"\\save\\type2")
+input_folder = abspath(getcwd()+"\\save\\all\\type2")
 output_folder = abspath(getcwd()+"\\pick\\model2\\02")
 random_ecg(100,input_folder,output_folder)
 

@@ -17,11 +17,11 @@ def ecgtodf(path):
 
     for p in dir:
         print(p)
-        data = pd.read_csv(path+"\\"+p)
+        data = pd.read_csv(path+"\\"+p,header=None)
         all =  np.append(all,data)
         n = n+1
     all = all[1:]
-    all=np.resize(all,(n,288))
+    all=np.resize(all,(n,289))
 
     return all
 

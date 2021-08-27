@@ -21,7 +21,7 @@ import use.mitbih_ecg.form as es
 
 input_path = abspath(home_path+"\mit_bih")
 output_path = abspath(home_path+"\save")
-output_path = output_path+"\\all"
+output_path = output_path+"\\4beat_remove"
 
 files = listdir(input_path)
 for f in files:

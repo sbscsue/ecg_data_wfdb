@@ -16,7 +16,7 @@ git_path = home_path+"\\ecg_data_wfdb"
 sys.path.append(git_path)
 from use.segment.pick import random_ecg
 
-input_folder = abspath(getcwd()+"\\save\\all\\type2")
-output_folder = abspath(getcwd()+"\\pick\\model2\\02")
+input_folder = abspath(getcwd()+"\\save\\4beat_remove\\type2")
+output_folder = abspath(getcwd()+"\\pick\\model2\\03")
 random_ecg(100,input_folder,output_folder)
 

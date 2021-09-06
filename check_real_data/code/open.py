@@ -1,4 +1,8 @@
 import matplotlib.pyplot as plt
+import scipy as sc
+import neurokit2 as nk
+from scipy.signal import decimate 
+import numpy as np
 
 home_path = "C:\\sebin\\ecg"
 git_path = home_path+"\\ecg_data_wfdb"
@@ -24,26 +28,37 @@ n = len(data)
 for i in range(n):
     data[i] = float(data[i])
 
-plt.figure(1)
-bookmark = 0
-plt.subplot(2,1,1)
-plt.plot(data[bookmark+0:bookmark+100000])
 
-
-
-#대충 셈플링
-resampling = 27
-re_data = []
+resampling = 28
 print(n)
-d = n//27
-print(d)
-for i in range(d):
+re_n = n//28
+print(re_n)
+
+
+re_data = []
+for i in range(re_n):
     re_data.append(data[i*resampling])
+    
+
+index = 5
+plt.subplot(3,1,1)
+plt.plot(data)
+
+plt.subplot(3,1,2)
+plt.plot(re_data)
 
 
-plt.subplot(2,1,2)
-plt.plot(re_data[0:3600])
+
+peak = nk.ecg.ecg_findpeaks(re_data, sampling_rate=360, method='neurokit')
+peak = np.array(peak['ECG_R_Peaks'])
+
+peak_y = np.zeros(re_n)
+for i in peak:
+    peak_y[i] = re_data[i]
+
+re_n = range(re_n)
+plt.subplot(3,1,3)
+plt.plot(re_n,re_data,re_n,peak_y,"o")
+plt.ylim(1000)
+
 plt.show()
-        
-   
-

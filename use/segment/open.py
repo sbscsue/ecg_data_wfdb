@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from os import listdir
 
 #file open one file 
-def ecgtodf(path):
+def ecgtodf(path,size):
 
     dir = listdir(path)
 
@@ -21,7 +21,7 @@ def ecgtodf(path):
         all =  np.append(all,data)
         n = n+1
     all = all[1:]
-    all=np.resize(all,(n,289))
+    all=np.resize(all,(n,size))
 
     return all
 

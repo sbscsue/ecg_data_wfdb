@@ -9,12 +9,13 @@ import pickle
 import wfdb 
 
 class ecg_segment:
-    def __init__(self,folder_path,file_name,sampto=None):
-        #1. save file path
+    def __init__(self,folder_path,file_name,ver,sampto=None):
+        #1. save default value
         self.folder = folder_path
         self.file = file_name
-
         self.file_path = folder_path+'\\'+file_name
+
+        self.ver = ver
         
         #2. record value , annotation value 
         self.record = wfdb.rdsamp(self.file_path,channels=[0],sampto = sampto)[0].flatten()
@@ -24,18 +25,21 @@ class ecg_segment:
 
         #3. segement
         #divide beat and non_beat(wave form)
-        self.beat,self.non_beat = self.set_annotation()
+        if ver=='aami':
+            self.beat,self.non_beat = self.set_annotation_aami()
+        elif ver=='mitbih':
+            #mitbih a->m/ r-> o/ j->z n->i e->k /->g
+            self.beat,self.non_beat = self.set_annotation_mitbih()
+        else:
+            raise NameError('not support annotation')
+
+        
         #seg = use beat
         self.seg = self.set_segment(2,144)
         #sample_seg 
         self.sample_seg = None
     
-    #get
-    def get_record(self):
-        return self.record
-  
-    def get_annotation(self):
-        return [self.sample,self.symbol,self.value]
+    
     
 
 
@@ -47,15 +51,25 @@ class ecg_segment:
     #plot ecg,annotation
     def plot_all(self):
         plt.plot(np.arange(self.get_record().size),self.get_record(),self.get_annotation()[0],self.get_annotation()[2],"o")
-        
+    
+
+    #output_segment
+    def output_segment(self,dir):
+        if self.ver=='aami':
+            self.output_segment_aami(dir)
+        elif self.ver=='mitbih':
+            self.output_segment_mitbih(dir)
+        else:
+            raise NameError('not support annotation')   
+
     #set 
-    def set_annotation(self):
+    def set_annotation_aami(self):
         beat_annotations = ['N','L','R','B','A','a','J','S','V','r','F','e','j','n','E','/','f','Q','?']
         none_beat_annotations = ['[','!',']','x','(',')','p','t','u','`','\'','^','|','~','+','s','T','*','D','=','\"','@']
         
 
-        mit_to_aami = { 'N':['N','L','R','e','j'],
-                        'S':['A','a','J','S'],
+        mit_to_aami = { 'N':['N','L','R','e','z'],
+                        'S':['A','m','J','S'],
                         'V':['V','E'],
                         'F':['F'],
                         'Q':['/','f','Q']
@@ -64,6 +78,22 @@ class ecg_segment:
 
         sample = self.annotation.sample
         symbol = self.annotation.symbol
+        if symbol == 'a':
+            symbol = 'm'
+        elif symbol == 'r':
+            symbol ='o'
+        elif symbol == 'j':
+            symbol ='z'
+        elif symbol =='n':
+            symbol ='i'
+        elif symbol =='e':
+            symbol ='k'
+        elif symbol =='/':
+            symbol='g'
+        elif symbol =='f':
+            symbol='c'
+        elif symbol == '?':
+            symbol='h'
         value = np.empty(sample.size)
    
         for i in range(sample.size):
@@ -83,6 +113,37 @@ class ecg_segment:
                     if symbol[i] in mit_to_aami[j]:
                         tmp[i][1] = j
                         beat = np.append(beat,tmp[i])
+            else:
+                non_beat = np.append(non_beat,tmp[i])
+        
+        beat = beat[1:].reshape(-1,3)
+        non_beat = non_beat[1:].reshape(-1,3)
+        
+
+        return beat,non_beat
+    
+    def set_annotation_mitbih(self):
+        beat_annotations = ['N','L','R','B','A','m','J','S','V','o','F','k','z','i','E','g','c','Q','h']
+        none_beat_annotations = ['[','!',']','x','(',')','p','t','u','`','\'','^','|','~','+','s','T','*','D','=','\"','@']
+        
+        sample = self.annotation.sample
+        symbol = self.annotation.symbol
+        value = np.empty(sample.size)
+   
+        for i in range(sample.size):
+            value[i] = self.record[sample[i]]
+        
+        tmp = np.stack((sample,symbol,value),axis=1)
+        
+        
+
+        beat = np.empty([])
+        non_beat = np.empty([])
+
+        cnt = 0
+        for i in range(len(symbol)):
+            if symbol[i] in beat_annotations:
+                beat = np.append(beat,tmp[i])
             else:
                 non_beat = np.append(non_beat,tmp[i])
         
@@ -119,13 +180,9 @@ class ecg_segment:
                                 }) 
         return segment
         
-
-
-
-
 #output segment to python dictionary 
 #output dir /type1:100,101
-    def output_segment(self,dir):
+    def output_segment_aami(self,dir):
         aami = ['N','S','V','F','Q']
 
         #type1:101,102
@@ -156,55 +213,37 @@ class ecg_segment:
             data.to_csv(path_1+"\\"+ann+"\\"+name,header=False,index=False)
             data.to_csv(path_2+"\\"+ann+"\\"+name,header=False,index=False)
 
-#upgrade to csv file all 
-'''
-    #output
-    def output_segment(self,dir,ver):
-        aami = ['N','S','V','F','Q']
-
-        #파일별로 분류 
-        if ver==1:
-            path_1 = dir
-            if not os.path.exists(path_1):
-                os.makedirs(path_1)
-            
-            path_2 = path_1+"\\"+self.file
-            os.makedirs(path_2)
-
-            
-            for p in aami:
-                os.makedirs(path_2+"\\"+p)
-            
-
-            
-            n = len(self.seg)
-
-            for i in range(n):
-                ann = self.seg[i]['annotation'] 
-                f = open(path_2+"\\"+ann+"\\"+self.file+"_"+str(i+1)+".txt",'wb')
-                pickle.dump(self.seg[i],f)
-                f.close()
-
-        #segnet별로 분류 (고쳐)
-        if ver==2:
-            path_1 = dir
-            if not os.path.exists(path_1):
-                os.makedirs(path_1)
-
-            for p in aami:
-                if not os.path.exists(path_1+"//"+p):
-                    os.makedirs(path_1+"\\"+p)
-            
-            n = len(self.seg)
-            for i in range(n):
-                ann = self.seg[i]['annotation'] 
-                f = open(path_1+"\\"+ann+"\\"+self.file+"_"+str(i+1)+".txt",'wb')
-                pickle.dump(self.seg[i],f)
-                f.close()
-'''
-
-
     
+    def output_segment_mitbih(self,dir):
+        mit = ['N','L','R','B','A','m','J','S','V','o','F','k','z','i','E','g','c','Q','h']
+
+        #type1:101,102
+        #type2:n,s,q,r...
+        path_1 = dir+"\\type1\\"+self.file
+        if not os.path.exists(path_1):
+            os.makedirs(path_1)
+        if not os.path.exists(path_1+"\\N"):
+            for p in mit:
+                os.makedirs(path_1+"\\"+p)
+
+        path_2 = dir+'\\type2'
+        if not os.path.exists(path_2):
+            os.makedirs(path_2)
+        if not os.path.exists(path_2+"\\N"):
+            for p in mit:
+                os.makedirs(path_2+"\\"+p)
+             
+        n = len(self.seg)
+
+        for i in range(n):
+            record = self.seg[i]['record']
+            ann = self.seg[i]['annotation']
+
+            data =  pd.DataFrame(np.append(record,ann))
+            
+            name = self.file+"_"+str(i+1)+".csv"
+            data.to_csv(path_1+"\\"+ann+"\\"+name,header=False,index=False)
+            data.to_csv(path_2+"\\"+ann+"\\"+name,header=False,index=False)
 
 
     

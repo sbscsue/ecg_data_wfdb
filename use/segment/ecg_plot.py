@@ -71,4 +71,61 @@ while(True):
         else:
             print("종료")
             break
+
+
+while(True):
+    ann = str(input())
+    if ann=='.':
+        break
+    else:
+        folder = listdir("C:\\sebin\\lab\\ecg\\save\\mit_ann_all\\type2")
+        if ann in folder:
+            index = -1
+            folder = output_folder+"\\"+ann
+            files = listdir(folder)
+
+            n = len(folder)
+
+            while(True):
+                check = str(input())
+                if check == 'N':
+                    if index < n-1:
+                        index+=1
+
+                        file = folder+"\\"+files[index]
+                        print(file)
+
+                        ecg = pd.read_csv(file,header=None)
+                        ecg = ecg[0:-1].to_numpy()
+                        ecg = ecg.astype('float')
+                        plt.plot(ecg)
+                        plt.show()
+
+                    else:
+                        print("인덱스가 끝에 있습니다.")
+                        break
+                if check == 'P':
+                    if index > 0:
+                        index-=1
+
+                        file = folder+"\\"+files[index]
+                        print(file)
+
+                        ecg = pd.read_csv(file,header=None)
+                        ecg = ecg[0:-1].to_numpy()
+                        ecg = ecg.astype('float')
+                        plt.plot(ecg)
+                        plt.show()
+                    else:
+                        print("인덱스가 앞에 있습니다.")
+                        break
+                    
+                if check == 'O':
+                    print("주석 설정창으로")
+                    break
+                
+
+        else:
+            print("종료")
+            break
         

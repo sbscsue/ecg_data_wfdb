@@ -78,22 +78,7 @@ class ecg_segment:
 
         sample = self.annotation.sample
         symbol = self.annotation.symbol
-        if symbol == 'a':
-            symbol = 'm'
-        elif symbol == 'r':
-            symbol ='o'
-        elif symbol == 'j':
-            symbol ='z'
-        elif symbol =='n':
-            symbol ='i'
-        elif symbol =='e':
-            symbol ='k'
-        elif symbol =='/':
-            symbol='g'
-        elif symbol =='f':
-            symbol='c'
-        elif symbol == '?':
-            symbol='h'
+     
         value = np.empty(sample.size)
    
         for i in range(sample.size):

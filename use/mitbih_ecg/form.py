@@ -67,8 +67,8 @@ class ecg_segment:
         beat_annotations = ['N','L','R','B','A','a','J','S','V','r','F','e','j','n','E','/','f','Q','?']
         none_beat_annotations = ['[','!',']','x','(',')','p','t','u','`','\'','^','|','~','+','s','T','*','D','=','\"','@']
         
-
-        mit_to_aami = { 'N':['N','L','R','e','z'],
+        #n beat z->j(오류)
+        mit_to_aami = { 'N':['N','L','R','e','j'],
                         'S':['A','m','J','S'],
                         'V':['V','E'],
                         'F':['F'],
@@ -108,7 +108,7 @@ class ecg_segment:
         return beat,non_beat
     
     def set_annotation_mitbih(self):
-        beat_annotations = ['N','L','R','B','A','m','J','S','V','o','F','k','z','i','E','g','c','Q','h']
+        beat_annotations = ['N','L','R','B','A','a','J','S','V','r','F','e','j','n','E','/','f','Q','?']
         none_beat_annotations = ['[','!',']','x','(',')','p','t','u','`','\'','^','|','~','+','s','T','*','D','=','\"','@']
         
         sample = self.annotation.sample
@@ -199,38 +199,36 @@ class ecg_segment:
             data.to_csv(path_2+"\\"+ann+"\\"+name,header=False,index=False)
 
     
-    def output_segment_mitbih(self,dir):
+    
+    def output_segment_mitbih(self,path):
         mit = ['N','L','R','B','A','m','J','S','V','o','F','k','z','i','E','g','c','Q','h']
 
-        #type1:101,102
-        #type2:n,s,q,r...
-        path_1 = dir+"\\type1\\"+self.file
-        if not os.path.exists(path_1):
-            os.makedirs(path_1)
-        if not os.path.exists(path_1+"\\N"):
-            for p in mit:
-                os.makedirs(path_1+"\\"+p)
+        
+        p = path+"\\"+str(self.file)
+        csv_p = p+"\\"+"csv"
+        img_p = p+"\\"+"img"
+        
+        print(p)
+        print(os.path.isdir(p))
+        if os.path.isdir(p)==False:
+            os.makedirs(csv_p)
+            os.makedirs(img_p)
+        else:
+            return -1
 
-        path_2 = dir+'\\type2'
-        if not os.path.exists(path_2):
-            os.makedirs(path_2)
-        if not os.path.exists(path_2+"\\N"):
-            for p in mit:
-                os.makedirs(path_2+"\\"+p)
-             
-        n = len(self.seg)
-
-        for i in range(n):
-            record = self.seg[i]['record']
+        for i in range(len(self.seg)):
+            print(i)
             ann = self.seg[i]['annotation']
+            ecg = pd.DataFrame(self.seg[i]['record'])
 
-            data =  pd.DataFrame(np.append(record,ann))
+            ecg.to_csv(csv_p+"\\"+str(ann)+"_"+str(i))
+            plt.plot(ecg)
+            plt.savefig(img_p+"\\"+str(ann)+"_"+str(i))
+
+            plt.cla() 
+        
+
             
-            name = self.file+"_"+str(i+1)+".csv"
-            data.to_csv(path_1+"\\"+ann+"\\"+name,header=False,index=False)
-            data.to_csv(path_2+"\\"+ann+"\\"+name,header=False,index=False)
-
-
     
 
         

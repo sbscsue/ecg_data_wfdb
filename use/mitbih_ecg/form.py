@@ -108,8 +108,8 @@ class ecg_segment:
         return beat,non_beat
     
     def set_annotation_mitbih(self):
-        beat_annotations = ['N','L','R','B','A','a','J','S','V','r','F','e','j','n','E','/','f','Q','?']
-        none_beat_annotations = ['[','!',']','x','(',')','p','t','u','`','\'','^','|','~','+','s','T','*','D','=','\"','@']
+        beat_annotations = ['L','N','R','e','j','A','J','S','a','E','V','F','/','f','Q']
+        #beat_annotations = ['N','L','R','B','A','a','J','S','V','r','F','e','j','n','E','/','f','Q','?']
         
         sample = self.annotation.sample
         symbol = self.annotation.symbol

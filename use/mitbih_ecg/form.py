@@ -9,41 +9,50 @@ import pickle
 import wfdb 
 
 class ecg_segment:
-    def __init__(self,folder_path,file_name,ver,sampto=None):
-        #1. save default value
-        self.folder = folder_path
-        self.file = file_name
-        self.file_path = folder_path+'\\'+file_name
+    def __init__( self, file_path, ver="mitbih", channel=[0] ,sampto=None, seg_size=144 ):
+        self.mit_bih_ann = ['L','N','R','e','j','A','J','S','a','E','V','F','/','f','Q']   
+        self.aami_ann = ['N','S','V','F','Q']
+        self.mit_to_aami = { 
+                        'N':['L','N','R','e','j'],
+                        'S':['A','J','S','a'],
+                        'V':['E','V'],
+                        'F':['F'],
+                        'Q':['/','f','Q']
+                        }
 
+                        
+        #1. save default value
         self.ver = ver
-        
+        self.file_name = file_path.split("\\")[-1]
+        self.file_path = file_path
+
+        print(self.file_name)
+
         #2. record value , annotation value 
-        self.record = wfdb.rdsamp(self.file_path,channels=[0],sampto = sampto)[0].flatten()
+        self.record = wfdb.rdsamp(self.file_path,channels=channel,sampto = sampto)[0].flatten()
         #annotation  = annotation wfdb class / sample / symbol / value 
         self.annotation = wfdb.rdann(self.file_path,'atr',summarize_labels=True,sampto = sampto)
-        
+    
+        self.tmp = self.re_ann()
 
         #3. segement
         #divide beat and non_beat(wave form)
         if ver=='aami':
             self.beat,self.non_beat = self.set_annotation_aami()
         elif ver=='mitbih':
-            #mitbih a->m/ r-> o/ j->z n->i e->k /->g
             self.beat,self.non_beat = self.set_annotation_mitbih()
         else:
             raise NameError('not support annotation')
 
-        
         #seg = use beat
-        self.seg = self.set_segment(2,144)
-        #sample_seg 
-        self.sample_seg = None
+        self.seg = self.set_segment(seg_size)
     
     
+        
     
 
 
-    #plot
+    #ecg
     #plot ecg 
     def plot_record(self):
         plt.plot(np.arange(self.get_record().size),self.get_record())
@@ -62,72 +71,60 @@ class ecg_segment:
         else:
             raise NameError('not support annotation')   
 
-    #set 
-    def set_annotation_aami(self):
-        beat_annotations = ['N','L','R','B','A','a','J','S','V','r','F','e','j','n','E','/','f','Q','?']
-        none_beat_annotations = ['[','!',']','x','(',')','p','t','u','`','\'','^','|','~','+','s','T','*','D','=','\"','@']
-        
-        #n beat z->j(오류)
-        mit_to_aami = { 'N':['N','L','R','e','j'],
-                        'S':['A','m','J','S'],
-                        'V':['V','E'],
-                        'F':['F'],
-                        'Q':['/','f','Q']
-                       }
 
+
+
+
+
+    def re_ann(self):
+        n = len(self.annotation.sample)
 
         sample = self.annotation.sample
         symbol = self.annotation.symbol
-     
-        value = np.empty(sample.size)
-   
-        for i in range(sample.size):
+        value = np.empty(n)
+        
+
+        #(rpeak 값 추출)
+        for i in range(n):
             value[i] = self.record[sample[i]]
         
         tmp = np.stack((sample,symbol,value),axis=1)
-        
-        
 
+        return tmp
+
+    #set 
+    def set_annotation_aami(self):
         beat = np.empty([])
         non_beat = np.empty([])
 
+        n = len(self.tmp)
         cnt = 0
-        for i in range(len(symbol)):
-            if symbol[i] in beat_annotations:
-                for j in mit_to_aami:
-                    if symbol[i] in mit_to_aami[j]:
+
+        tmp = self.tmp
+        for i in range(n):
+            if tmp[i][1] in self.mit_bih_ann:
+                for j in self.mit_to_aami:
+                    if tmp[i][1] in self.mit_to_aami[j]:
                         tmp[i][1] = j
                         beat = np.append(beat,tmp[i])
             else:
                 non_beat = np.append(non_beat,tmp[i])
         
-        beat = beat[1:].reshape(-1,3)
-        non_beat = non_beat[1:].reshape(-1,3)
-        
+        beat = beat[1:].reshape((-1,3))
+        non_beat = non_beat[1:].reshape((-1,3))
 
         return beat,non_beat
     
     def set_annotation_mitbih(self):
-        beat_annotations = ['L','N','R','e','j','A','J','S','a','E','V','F','/','f','Q']
-        #beat_annotations = ['N','L','R','B','A','a','J','S','V','r','F','e','j','n','E','/','f','Q','?']
-        
-        sample = self.annotation.sample
-        symbol = self.annotation.symbol
-        value = np.empty(sample.size)
-   
-        for i in range(sample.size):
-            value[i] = self.record[sample[i]]
-        
-        tmp = np.stack((sample,symbol,value),axis=1)
-        
-        
-
         beat = np.empty([])
         non_beat = np.empty([])
 
+        n = len(self.tmp)
         cnt = 0
-        for i in range(len(symbol)):
-            if symbol[i] in beat_annotations:
+
+        tmp = self.tmp
+        for i in range(n):
+            if tmp[i][1] in self.mit_bih_ann:
                 beat = np.append(beat,tmp[i])
             else:
                 non_beat = np.append(non_beat,tmp[i])
@@ -135,55 +132,51 @@ class ecg_segment:
         beat = beat[1:].reshape(-1,3)
         non_beat = non_beat[1:].reshape(-1,3)
         
-
         return beat,non_beat
-         
-    def set_segment(self,type,window):
-        segment = []
-        if type==1:
-        #window 양으로 자르기
-            '''
-            size = self.sample.size // window 
-            for i in range(size-1):
-                segment.append(self.record[window*i:window*(i+1)-1])
-            '''
-        #window  -sample - window 양으로 자르기 
-        elif type==2:
-            size = len(self.beat)
-            for i in range(size):
-                sepfrom = int(self.beat[i][0])-window
-                septo = int(self.beat[i][0])+window
+    
 
-                if sepfrom <= 0:
-                    continue
-                if septo >= len(self.record):
-                    break
-                
-                
-                segment.append({'record':self.record[sepfrom:septo],
-                                'annotation':self.beat[i][1]
-                                }) 
+
+    def set_segment(self,window):
+        segment = []
+        
+        size = len(self.beat)
+        for i in range(size):
+            sepfrom = int(self.beat[i][0])-window
+            septo = int(self.beat[i][0])+window
+
+            if sepfrom <= 0:
+                continue
+            if septo >= len(self.record):
+                break
+            
+            
+            segment.append({'record':self.record[sepfrom:septo],
+                            'annotation':self.beat[i][1]
+                            }) 
+
         return segment
+
+    
         
 #output segment to python dictionary 
-#output dir /type1:100,101
     def output_segment_aami(self,dir):
-        aami = ['N','S','V','F','Q']
-
+    
         #type1:101,102
-        #type2:n,s,q,r...
         path_1 = dir+"\\type1\\"+self.file
         if not os.path.exists(path_1):
             os.makedirs(path_1)
+        
         if not os.path.exists(path_1+"\\N"):
-            for p in aami:
+            for p in self.aami_ann:
                 os.makedirs(path_1+"\\"+p)
+        
 
+        #type2:n,s,q,r...
         path_2 = dir+'\\type2'
         if not os.path.exists(path_2):
             os.makedirs(path_2)
         if not os.path.exists(path_2+"\\N"):
-            for p in aami:
+            for p in self.aami_ann:
                 os.makedirs(path_2+"\\"+p)
              
         n = len(self.seg)
@@ -194,16 +187,17 @@ class ecg_segment:
 
             data =  pd.DataFrame(np.append(record,ann))
             
-            name = self.file+"_"+str(i+1)+".csv"
-            data.to_csv(path_1+"\\"+ann+"\\"+name,header=False,index=False)
-            data.to_csv(path_2+"\\"+ann+"\\"+name,header=False,index=False)
+            name = str(self.file)+"_"+str(ann)+"_"+str(i)
+            
+            path = path_1+"\\"+ann+"\\"+name+".csv"
+            data.to_csv(path,header=False,index=False)
+            path = path_2+"\\"+ann+"\\"+name+".csv"
+            data.to_csv(path,header=False,index=False)
+
 
     
     
     def output_segment_mitbih(self,path):
-        mit = ['N','L','R','B','A','m','J','S','V','o','F','k','z','i','E','g','c','Q','h']
-
-        
         p = path+"\\"+str(self.file)
         csv_p = p+"\\"+"csv"
         img_p = p+"\\"+"img"

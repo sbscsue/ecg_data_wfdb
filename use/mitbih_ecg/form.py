@@ -162,7 +162,7 @@ class ecg_segment:
     def output_segment_aami(self,dir):
     
         #type1:101,102
-        path_1 = dir+"\\type1\\"+self.file
+        path_1 = dir+"\\type1\\"+self.file_name
         if not os.path.exists(path_1):
             os.makedirs(path_1)
         
@@ -187,7 +187,7 @@ class ecg_segment:
 
             data =  pd.DataFrame(np.append(record,ann))
             
-            name = str(self.file)+"_"+str(ann)+"_"+str(i)
+            name = str(self.file_name)+"_"+str(ann)+"_"+str(i)
             
             path = path_1+"\\"+ann+"\\"+name+".csv"
             data.to_csv(path,header=False,index=False)
@@ -198,7 +198,7 @@ class ecg_segment:
     
     
     def output_segment_mitbih(self,path):
-        p = path+"\\"+str(self.file)
+        p = path+"\\"+str(self.file_name)
         csv_p = p+"\\"+"csv"
         img_p = p+"\\"+"img"
         

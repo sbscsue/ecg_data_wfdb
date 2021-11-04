@@ -1,7 +1,29 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd 
+from sklearn.preprocessing import MinMaxScaler
+
 #dater change to tensor
+def to_mixmax_tensor(x,y):
+    
+    record = x.to_numpy()
+    ann = y.to_numpy()
+    
+    t_record = record.T
+    scaler = MinMaxScaler()
+    scaler.fit(t_record)
+    after_record = scaler.transform(t_record).T
+
+
+    record = pd.DataFrame(after_record)
+    ann = pd.DataFrame(ann)
+
+    x=x_tensor_input(record)
+    y=y_tensor_input(ann)
+
+    return x,y
+
+    
 
 def x_tensor_input(value):
     x=value.astype(float)
@@ -20,3 +42,4 @@ def y_tensor_input(value):
     y_row,y_col = y.shape
     y = y.reshape(y_row,y_col, 1)
     return y
+

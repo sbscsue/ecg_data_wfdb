@@ -10,7 +10,9 @@ import wfdb
 
 class ecg_segment:
     def __init__( self, file_path, ver="mitbih", channel=[0] ,sampto=None, seg_size=144 ):
+        #annotation / 주의(file 이름은 / 가 안된다!)
         self.mit_bih_ann = ['L','N','R','e','j','A','J','S','a','E','V','F','/','f','Q']   
+        self.mit_bih_ann_to_file = ['L','N','R','e','j','A','J','S','a','E','V','F','m','f','Q']  
         self.aami_ann = ['N','S','V','F','Q']
         self.mit_to_aami = { 
                         'N':['L','N','R','e','j'],
@@ -125,7 +127,11 @@ class ecg_segment:
         tmp = self.tmp
         for i in range(n):
             if tmp[i][1] in self.mit_bih_ann:
-                beat = np.append(beat,tmp[i])
+                if tmp[i][1] == "/":
+                    tmp[i][1] = "m"
+                    beat = np.append(beat,tmp[i])
+                else:
+                    beat = np.append(beat,tmp[i])
             else:
                 non_beat = np.append(non_beat,tmp[i])
         

@@ -4,27 +4,20 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 
 #dater change to tensor
-def to_mixmax_tensor(x,y):
+def to_mixmax_tensor(x):
     
-    record = x.to_numpy()
-    ann = y.to_numpy()
-    
-    t_record = record.T
+    t_record = x.T
+
     scaler = MinMaxScaler()
     scaler.fit(t_record)
     after_record = scaler.transform(t_record).T
-
-
-    record = pd.DataFrame(after_record)
-    ann = pd.DataFrame(ann)
-
-    x=x_tensor_input(record)
-    y=y_tensor_input(ann)
-
-    return x,y
+    print(after_record.shape)
+    return after_record
 
     
 
+
+#for aami class
 def x_tensor_input(value):
     x=value.astype(float)
     x=x.to_numpy()

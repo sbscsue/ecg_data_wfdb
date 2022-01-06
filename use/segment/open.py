@@ -1,10 +1,10 @@
 import os
+from os import listdir
 
 import numpy as np
 import pandas as pd 
 import matplotlib.pyplot as plt
 
-from os import listdir
 
 def all_check(path):
     ann = []
@@ -24,16 +24,24 @@ def toDataframe(p):
     path = p+"\\"+"csv"
     dir = listdir(path)
     
+    n = len(dir)
+    data_n = np.array(pd.read_csv(path+"\\"+dir[0],header=None)[1:]).flatten().size
 
-    df = pd.DataFrame(np.empty((1,289)))
-    print(df)
-    for f in dir:
-        print(path+"\\"+f)
-        data = pd.read_csv(path+"\\"+f,header=None)[1:].T
-        print(data)
-        df.append(df,data)
+    x = np.zeros((n,data_n-1),float)
+    y = np.array(['a' for _ in range(n)],dtype="object")
+
+    for i in range(len(dir)):
+        print(path+"\\"+dir[i])
+        d = pd.read_csv(path+"\\"+dir[i],header=None)[1:]
+        d = np.array(d).flatten()
         
-    return df
+        n = len(d)
+        
+        x[i] = d[0:-1]
+        y[i] = d[-1]
+
+    x = x.reshape(-1,n-1)
+    return x,y
         
 
 

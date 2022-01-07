@@ -1,14 +1,20 @@
 from genericpath import isdir
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd 
+
+from scipy import signal
 
 import os
 from os import makedirs
 from os.path import isdir
 
 import sys
-import pickle 
+import pickle
+
+from BaselineRemoval import BaselineRemoval
+from scipy.signal.signaltools import resample 
 
 import wfdb 
 
@@ -19,7 +25,7 @@ import wfdb
 
 #lbbb rbbb 제외
 class ecg_segment:
-    def __init__( self, file_path, ver="mitbih", channel=[0] , seg_size=144 ,sampto=None):
+    def __init__( self, file_path, channel=[0] ,ver="mitbih", mode =1, seg_size=144, resample_seg_size = -1):
         # / -> m (저장 문제로)
         self.mit_bih = ['L','N','R','S','E','A','J',
                         'V','F','/','Q',
@@ -36,9 +42,18 @@ class ecg_segment:
             'abnormal': ['A','a','J','S','V','r','F','e','j','n','E','f'],
             'unclassification':['Q','?']
         }
-                        
 
+        # N : 정상 / S: 심방이전 / V: 심실 
+        self.nsv = {
+            'N' : ["N"],
+            'S' : ["e","A","j","J","S","a"],
+            'V' : ["E","V","F"]
+        }
+        
         self.ver = ver
+        self.seg_size = seg_size
+        self.resample_seg_size = resample_seg_size
+
         if(ver not in ['aami','mitbih','binary']):
             raise NameError('not support annotation')
         self.file_name = file_path.split("\\")[-1]
@@ -46,17 +61,27 @@ class ecg_segment:
 
         print(self.file_name)
 
-        self.record = wfdb.rdsamp(self.file_path,channels=channel,sampto = sampto)[0].flatten()
+        self.record = wfdb.rdsamp(self.file_path,channels=channel)[0].flatten()
         #annotation  = annotation wfdb class / sample / symbol / value 
-        self.annotation = wfdb.rdann(self.file_path,'atr',summarize_labels=True,sampto = sampto)
+        self.annotation = wfdb.rdann(self.file_path,'atr',summarize_labels=True)
     
+        
+        if mode == 1:
+            pass 
+        elif mode == 2:
+            print("baseline remove")
+            baseObj=BaselineRemoval(self.record)
+            self.record = baseObj.ZhangFit()
+
+        else:
+            raise TypeError("not support mode")
 
         self.tmp = self.re_ann()
         self.beat , self.non_beat = self.set_annotation()
         self.seg = self.set_segment(seg_size)
-    
-    
+
         
+    
 
     #ecg
     #plot ecg 
@@ -67,18 +92,6 @@ class ecg_segment:
     def plot_all(self):
         plt.plot(np.arange(self.get_record().size),self.get_record(),self.get_annotation()[0],self.get_annotation()[2],"o")
     
-
-    #output_segment
-    def output_segment(self,dir):
-        if self.ver=='aami':
-            self.output_segment_aami(dir)
-        elif self.ver=='mitbih':
-            self.output_segment_mitbih(dir)
-        else:
-            raise NameError('not support annotation')   
-
-
-
 
     def re_ann(self):
         n = len(self.annotation.sample)
@@ -157,10 +170,17 @@ class ecg_segment:
             if septo >= len(self.record):
                 break
             
+            if(self.resample_seg_size == -1):
+                resample = self.record[sepfrom:septo]
+            else:
+                resample = signal.resample(self.record[sepfrom:septo],self.resample_seg_size)
+                
+            segment.append({'record':resample,
+                        'annotation':self.beat[i][1]
+                        }) 
+
             
-            segment.append({'record':self.record[sepfrom:septo],
-                            'annotation':self.beat[i][1]
-                            }) 
+            
 
         return segment
 
@@ -168,6 +188,7 @@ class ecg_segment:
         
 #mitbih 파일 경로 겹치는 오류 
     def output_segment(self,path,img = False):
+        print("output")
         ann = []
         if self.ver=='mitbih':
             ann = self.mit_bih

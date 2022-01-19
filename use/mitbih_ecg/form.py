@@ -45,16 +45,16 @@ class ecg_segment:
 
         # N : 정상 / S: 심방이전 / V: 심실 
         self.nsv = {
-            'N' : ["N"],
-            'S' : ["e","A","j","J","S","a"],
-            'V' : ["E","V","F"]
+            'N' : ['N'],
+            'S' : ['e','A','J','j','S','a'],
+            'V' : ['E','V','F']
         }
         
         self.ver = ver
         self.seg_size = seg_size
         self.resample_seg_size = resample_seg_size
 
-        if(ver not in ['aami','mitbih','binary']):
+        if(ver not in ['aami','mitbih','binary','nsv']):
             raise NameError('not support annotation')
         self.file_name = file_path.split("\\")[-1]
         self.file_path = file_path
@@ -149,6 +149,16 @@ class ecg_segment:
                             beat = np.append(beat,tmp[i])
                 else:
                     non_beat = np.append(non_beat,tmp[i])
+        
+        elif self.ver == 'nsv':
+            for i in range(n):
+                if tmp[i][1] in self.mit_bih:
+                    for j in self.nsv:
+                        if tmp[i][1] in self.nsv[j]:
+                            tmp[i][1] = j
+                            beat = np.append(beat,tmp[i])
+                else:
+                    non_beat = np.append(non_beat,tmp[i])
 
         beat = beat[1:].reshape(-1,3)
         non_beat = non_beat[1:].reshape(-1,3)
@@ -196,6 +206,8 @@ class ecg_segment:
             ann = list(self.aami.keys())
         elif self.ver == 'binary':
             ann = list(self.binary.keys())
+        elif self.ver == 'nsv':
+            ann = list(self.nsv.keys())
 
 
         #type1:101,102

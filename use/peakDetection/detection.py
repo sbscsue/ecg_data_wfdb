@@ -19,13 +19,16 @@ threshold
 peak_duration
 '''
 
-def getPeak(path,channel=[0]):
+def getPeak(path,channel=[0],mode = 1):
     print(path)
     ecg = wf.rdsamp(path,channels=channel)[0].reshape(-1)
     ann = wf.rdann(path,extension="atr")
 
-    baseObj=BaselineRemoval(ecg)
-    ecg = baseObj.ZhangFit()
+    if(mode == 1):
+        pass
+    elif(mode == 2):
+        baseObj=BaselineRemoval(ecg)
+        ecg = baseObj.ZhangFit()
     
     original = ecg
     square = original ** 2

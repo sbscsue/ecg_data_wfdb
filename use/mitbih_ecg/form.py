@@ -247,6 +247,9 @@ class ecg_segment:
                 plt.savefig(path2+"\\"+ann+"\\"+"img"+"\\"+name+".jpg")
                 plt.cla() 
 
+
+    
+    def output_ecg(self,path):
             
 
 

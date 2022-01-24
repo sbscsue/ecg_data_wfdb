@@ -249,8 +249,24 @@ class ecg_segment:
 
 
     
-    def output_ecg(self,path):
-            
+   
+    def returnAllReSampleEcgToString(self,folderPath,resizeFs = -1):
+        reEcg = self.record.astype(np.float32)
+
+        if(resizeFs != -1):
+            reEcg = resample(self.record,30*60*resizeFs)
+        else:
+            reEcg = self.record
+
+        pdEcg = pd.DataFrame(reEcg)
+        print(pdEcg[0])
+        pdEcg.to_csv(folderPath+"\\"+self.file_name+".csv",header=False,index=False,float_format='%.3f')
+        
+
+
+        
+
+        
 
 
 

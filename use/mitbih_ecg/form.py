@@ -1,4 +1,5 @@
 from genericpath import isdir
+from turtle import right
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -25,7 +26,7 @@ import wfdb
 
 #lbbb rbbb 제외
 class ecg_segment:
-    def __init__( self, file_path, channel=[0] ,ver="mitbih", mode =1, seg_size=144, resample_seg_size = -1):
+    def __init__( self, file_path, channel=[0] ,ver="mitbih", mode =1, leftSegSize=144,rightSegSize = 144, resample_seg_size = -1):
         # / -> m (저장 문제로)
         self.mit_bih = ['L','N','R','S','E','A','J',
                         'V','F','/','Q',
@@ -51,7 +52,8 @@ class ecg_segment:
         }
         
         self.ver = ver
-        self.seg_size = seg_size
+        self.leftSegSize = leftSegSize
+        self.rightSegSize = rightSegSize
         self.resample_seg_size = resample_seg_size
 
         if(ver not in ['aami','mitbih','binary','nsv']):
@@ -78,7 +80,7 @@ class ecg_segment:
 
         self.tmp = self.re_ann()
         self.beat , self.non_beat = self.set_annotation()
-        self.seg = self.set_segment(seg_size)
+        self.seg = self.set_segment(leftSegSize,rightSegSize)
 
         
     
@@ -167,13 +169,13 @@ class ecg_segment:
 
  
 
-    def set_segment(self,window):
+    def set_segment(self,leftWindow,rightWindow):
         segment = []
         
         size = len(self.beat)
         for i in range(size):
-            sepfrom = int(self.beat[i][0])-window
-            septo = int(self.beat[i][0])+window
+            sepfrom = int(self.beat[i][0])-leftWindow
+            septo = int(self.beat[i][0])+rightWindow
 
             if sepfrom <= 0:
                 continue
@@ -188,10 +190,6 @@ class ecg_segment:
             segment.append({'record':resample,
                         'annotation':self.beat[i][1]
                         }) 
-
-            
-            
-
         return segment
 
     

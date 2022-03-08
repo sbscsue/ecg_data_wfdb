@@ -26,7 +26,7 @@ import wfdb
 
 #lbbb rbbb 제외
 class ecg_segment:
-    def __init__( self, file_path, channel=[0] ,ver="mitbih", mode =1, leftSegSize=144,rightSegSize = 144, resample_seg_size = -1):
+    def __init__( self, file_path, channel=[0] ,ver="mitbih", baseLineRemoveFlag =1, intervalN = 10,leftSegSize=144,rightSegSize = 144, resample_seg_size = -1):
         # / -> m (저장 문제로)
         self.mit_bih = ['L','N','R','S','E','A','J',
                         'V','F','/','Q',
@@ -55,32 +55,41 @@ class ecg_segment:
         self.leftSegSize = leftSegSize
         self.rightSegSize = rightSegSize
         self.resample_seg_size = resample_seg_size
+        self.intervalN = intervalN
 
-        if(ver not in ['aami','mitbih','binary','nsv']):
-            raise NameError('not support annotation')
         self.file_name = file_path.split("\\")[-1]
         self.file_path = file_path
-
         print(self.file_name)
+
 
         self.record = wfdb.rdsamp(self.file_path,channels=channel)[0].flatten()
         #annotation  = annotation wfdb class / sample / symbol / value 
         self.annotation = wfdb.rdann(self.file_path,'atr',summarize_labels=True)
     
+        self.segmentStartIndex = None
+        self.segmentEndIndex = None
         
-        if mode == 1:
+        if(ver not in ['aami','mitbih','binary','nsv']):
+            raise NameError('not support annotation')
+
+
+        if baseLineRemoveFlag == 1:
             pass 
-        elif mode == 2:
+        elif baseLineRemoveFlag == 2:
             print("baseline remove")
             baseObj=BaselineRemoval(self.record)
             self.record = baseObj.ZhangFit()
 
         else:
-            raise TypeError("not support mode")
+            raise TypeError("not support baseLineRemoveFlag")
 
-        self.tmp = self.re_ann()
+
+
+        self.tmp = self.re_ann(self.intervalN)
+
         self.beat , self.non_beat = self.set_annotation()
         self.seg = self.set_segment(leftSegSize,rightSegSize)
+        self.interval = self.set_interval(self.segmentStartIndex,self.segmentEndIndex)
 
         
     
@@ -95,19 +104,48 @@ class ecg_segment:
         plt.plot(np.arange(self.get_record().size),self.get_record(),self.get_annotation()[0],self.get_annotation()[2],"o")
     
 
-    def re_ann(self):
+    def re_ann(self,intervalN):
         n = len(self.annotation.sample)
 
         sample = self.annotation.sample
         symbol = self.annotation.symbol
         value = np.empty(n)
+        prevInterval = np.empty(n)
+        averageInterval = np.empty(n)
         
 
         #(rpeak 값 추출)
         for i in range(n):
             value[i] = self.record[sample[i]]
+
+        #prevInterval값 추출
+
+        for i in range(n):
+            flag = i-1
+            if(flag<0):
+                prevInterval[i]=None
+            else:
+                cnt = 0
+                for j in range(flag,i):
+                    cnt = cnt + sample[j+1] - sample[j]
+                prevInterval[i] = int(cnt / 10)
+
+
+        #Averageinterval값 추출 
+        for i in range(n):
+            flag = i-(intervalN)
+            if(flag<0):
+                averageInterval[i]=None
+            else:
+                cnt = 0
+                for j in range(flag,i):
+                    cnt = cnt + sample[j+1] - sample[j]
+                averageInterval[i] = int(cnt / 10)
+
+        print("forDebug[prevInterval] :",prevInterval)      
+        print("forDebug[averageInterval] :",averageInterval)
         
-        tmp = np.stack((sample,symbol,value),axis=1)
+        tmp = np.stack((sample,symbol,value,prevInterval,averageInterval),axis=1)
 
         return tmp
 
@@ -117,12 +155,11 @@ class ecg_segment:
         non_beat = np.empty([])
 
         n = len(self.tmp)
-        cnt = 0
 
-        tmp = self.tmp
+        tmp = self.tmp[:,0:3]
+        print(tmp.shape)
 
         if self.ver=='aami':   
-            tmp = self.tmp
             for i in range(n):
                 if tmp[i][1] in self.mit_bih:
                     for j in self.aami:
@@ -167,8 +204,7 @@ class ecg_segment:
         
         return beat,non_beat
 
- 
-
+    
     def set_segment(self,leftWindow,rightWindow):
         segment = []
         
@@ -178,8 +214,10 @@ class ecg_segment:
             septo = int(self.beat[i][0])+rightWindow
 
             if sepfrom <= 0:
+                self.segmentStartIndex = i+1
                 continue
             if septo >= len(self.record):
+                self.segmentEndIndex = i
                 break
             
             if(self.resample_seg_size == -1):
@@ -191,6 +229,11 @@ class ecg_segment:
                         'annotation':self.beat[i][1]
                         }) 
         return segment
+
+    def set_interval(self,start,end):
+        interval = self.tmp[start:end,3:]
+
+        return interval 
 
     
         
@@ -246,7 +289,22 @@ class ecg_segment:
                 plt.cla() 
 
 
-    
+    def output_interval(self,path):
+        #type1:101,102
+        path1 = path+"\\"+"files"+"\\"+str(self.file_name)
+        path2 = path1+"\\"+"interval"
+
+        if isdir(path2) == False:
+            makedirs(path2)
+        
+        pd.DataFrame(self.interval).to_csv(path2+"\\"+"interval.csv")
+
+        
+     
+
+
+
+
    
     def returnAllReSampleEcgToString(self,folderPath,resizeFs = -1):
         reEcg = self.record.astype(np.float32)
@@ -259,7 +317,7 @@ class ecg_segment:
         pdEcg = pd.DataFrame(reEcg)
         print(pdEcg[0])
         pdEcg.to_csv(folderPath+"\\"+self.file_name+".csv",header=False,index=False,float_format='%.3f')
-            
+
 
 
         

@@ -259,7 +259,7 @@ class ecg_segment:
         pdEcg = pd.DataFrame(reEcg)
         print(pdEcg[0])
         pdEcg.to_csv(folderPath+"\\"+self.file_name+".csv",header=False,index=False,float_format='%.3f')
-        
+            
 
 
         

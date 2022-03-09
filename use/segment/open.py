@@ -1,5 +1,7 @@
+from ast import Str
 import os
 from os import listdir
+from pathlib import Path
 
 import numpy as np
 import pandas as pd 
@@ -20,7 +22,7 @@ def all_check(path):
 
 #annotation 별 open _ dtframe ( annotation 별로 저장되어있는 파일로)
 #주의 ! data 부분 1번째 배열부터 뽑아옴
-def toDataframe(p):
+def toDataframe_ann(p):
     path = p+"\\"+"csv"
     dir = listdir(path)
     
@@ -42,6 +44,46 @@ def toDataframe(p):
 
     x = x.reshape(-1,n-1)
     return x,y
+
+def toDataframe_interval(p):
+    p1 = p + "\\" + "files"
+    dir = sorted(Path(p1).iterdir(), key=os.path.getmtime)
+
+    #초기 작업 (파일 개수 / 배열 초기화)
+    n = 0
+    exampleFile = None
+    for p2 in dir:
+        pD = p2 / 'all'
+        f = list(Path.iterdir(pD))
+        n+=len(f)
+
+        if(p2==dir[-1]):
+            exampleFile = pd.read_csv(f[-1])
+    
+    exampleFile = exampleFile.to_numpy().flatten()
+    print(exampleFile)
+
+
+    #파일 읽기 
+    data = np.empty((n,exampleFile.size+2),dtype=Str)
+    for p2 in dir:
+        print(p2)
+        print("====================")
+        pD = p2 / 'all'
+        pI = p2 / 'interval' 
+
+        fD = list(Path.iterdir(pD))
+        fI = list(Path.iterdir(pI))
+        fI = pd.read_csv(fI[0]).to_numpy()
+
+        print(len(fD))
+        print(fI.size)
+        for i in range(len(fD)):
+            print(fD[i])
+            data[i][0:-2] = pd.read_csv(fD[i]).to_numpy().flatten()
+            data[i][-2:] = fI[i]
+
+    return data
         
 
 

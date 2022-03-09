@@ -94,12 +94,12 @@ class ecg_segment:
         print("tmp: ",len(self.tmp))
         self.seg = self.set_segment(leftSegSize,rightSegSize)
 
-        print("startIndex,endIndex: ",self.segmentStartIndex," ",self.segmentEndIndex)
+        print("startIndex,endIndex: ",self.segmentStartIndex," ",self.segmentEndIndex-1)
         print("seg: ",len(self.seg))
         self.interval = self.set_interval(self.segmentStartIndex,self.segmentEndIndex)
         print("interval: ",len(self.interval))
         self.set_segmentIntervalSync()
-         print("startIndex: ",self.intervalStartIndex," ")
+        print("startIndex: ",self.intervalStartIndex," ")
         print("seg,interval: ",len(self.seg)," ",len(self.interval))
        
         
@@ -223,7 +223,7 @@ class ecg_segment:
             if sepfrom <= 0:
                 self.segmentStartIndex = i+1
                 continue
-            if septo >= len(self.record):
+            if septo >= len(self.record) or (i==(size-1)):
                 self.segmentEndIndex = i
                 break
             

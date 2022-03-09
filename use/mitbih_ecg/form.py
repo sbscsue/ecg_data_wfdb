@@ -68,6 +68,7 @@ class ecg_segment:
     
         self.segmentStartIndex = None
         self.segmentEndIndex = None
+        self.intervalStartIndex = None
         
         if(ver not in ['aami','mitbih','binary','nsv']):
             raise NameError('not support annotation')
@@ -88,9 +89,19 @@ class ecg_segment:
         self.tmp = self.re_ann(self.intervalN)
 
         self.beat , self.non_beat = self.set_annotation()
-        self.seg = self.set_segment(leftSegSize,rightSegSize)
-        self.interval = self.set_interval(self.segmentStartIndex,self.segmentEndIndex)
 
+
+        print("tmp: ",len(self.tmp))
+        self.seg = self.set_segment(leftSegSize,rightSegSize)
+
+        print("startIndex,endIndex: ",self.segmentStartIndex," ",self.segmentEndIndex)
+        print("seg: ",len(self.seg))
+        self.interval = self.set_interval(self.segmentStartIndex,self.segmentEndIndex)
+        print("interval: ",len(self.interval))
+        self.set_segmentIntervalSync()
+         print("startIndex: ",self.intervalStartIndex," ")
+        print("seg,interval: ",len(self.seg)," ",len(self.interval))
+       
         
     
 
@@ -123,28 +134,25 @@ class ecg_segment:
         for i in range(n):
             flag = i-1
             if(flag<0):
-                prevInterval[i]=None
+                prevInterval[i] = -1
             else:
                 cnt = 0
                 for j in range(flag,i):
-                    cnt = cnt + sample[j+1] - sample[j]
-                prevInterval[i] = int(cnt / 10)
+                    cnt = cnt + (sample[j+1] - sample[j])/360
+                prevInterval[i] = cnt 
 
 
         #Averageinterval값 추출 
         for i in range(n):
             flag = i-(intervalN)
             if(flag<0):
-                averageInterval[i]=None
+                averageInterval[i] = -1
             else:
                 cnt = 0
                 for j in range(flag,i):
-                    cnt = cnt + sample[j+1] - sample[j]
-                averageInterval[i] = int(cnt / 10)
+                    cnt = cnt + (sample[j+1] - sample[j])/360
+                averageInterval[i] = cnt / 10
 
-        print("forDebug[prevInterval] :",prevInterval)      
-        print("forDebug[averageInterval] :",averageInterval)
-        
         tmp = np.stack((sample,symbol,value,prevInterval,averageInterval),axis=1)
 
         return tmp
@@ -157,7 +165,6 @@ class ecg_segment:
         n = len(self.tmp)
 
         tmp = self.tmp[:,0:3]
-        print(tmp.shape)
 
         if self.ver=='aami':   
             for i in range(n):
@@ -235,7 +242,20 @@ class ecg_segment:
 
         return interval 
 
-    
+    def set_segmentIntervalSync(self):
+        indexTmp = None
+        for i in range(len(self.interval)):
+            if(float(self.interval[i][1]) != -1):
+                indexTmp=i
+                break
+        
+        self.intervalStartIndex = indexTmp
+        
+        self.seg = self.seg[self.intervalStartIndex:]
+        self.interval = self.interval[self.intervalStartIndex:]
+
+        
+
         
 #mitbih 파일 경로 겹치는 오류 
     def output_segment(self,path,img = False):
@@ -297,15 +317,11 @@ class ecg_segment:
         if isdir(path2) == False:
             makedirs(path2)
         
-        pd.DataFrame(self.interval).to_csv(path2+"\\"+"interval.csv")
+        data = pd.DataFrame(self.interval).astype(float)
+        data.to_csv(path2+"\\"+"interval.csv",float_format='%.3f',columns=None,index=None)
 
         
      
-
-
-
-
-   
     def returnAllReSampleEcgToString(self,folderPath,resizeFs = -1):
         reEcg = self.record.astype(np.float32)
 
@@ -316,7 +332,7 @@ class ecg_segment:
 
         pdEcg = pd.DataFrame(reEcg)
         print(pdEcg[0])
-        pdEcg.to_csv(folderPath+"\\"+self.file_name+".csv",header=False,index=False,float_format='%.3f')
+        pdEcg.to_csv(folderPath+"\\"+self.file_name+".csv",header=None,index=False,float_format='%.3f')
 
 
 

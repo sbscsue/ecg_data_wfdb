@@ -65,7 +65,10 @@ def toDataframe_interval(p):
 
 
     #파일 읽기 
-    data = np.empty((n,exampleFile.size+2),dtype=Str)
+    x = np.empty((n,exampleFile.size+2-1),dtype=float)
+    y = np.empty(n,dtype=Str)
+
+    cnt = 0
     for p2 in dir:
         print(p2)
         print("====================")
@@ -80,10 +83,15 @@ def toDataframe_interval(p):
         print(fI.size)
         for i in range(len(fD)):
             print(fD[i])
-            data[i][0:-2] = pd.read_csv(fD[i]).to_numpy().flatten()
-            data[i][-2:] = fI[i]
+            d = pd.read_csv(fD[i]).to_numpy().flatten()
+            x[cnt+i][0:-2] = d[0:-1]
+            x[cnt+i][-2:] = fI[i]
+            y[cnt+i] = d[-1]
+        
+        cnt+=len(fD)
 
-    return data
+
+    return x,y
         
 
 

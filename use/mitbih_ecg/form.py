@@ -86,25 +86,29 @@ class ecg_segment:
 
 
 
-        self.tmp = self.re_ann(self.intervalN,2)
+        self.tmp = self.re_ann(self.intervalN,1)
         print("tmp: ",len(self.tmp))
 
         self.beat , self.non_beat = self.set_annotation()
     
         self.seg = self.set_segment(leftSegSize,rightSegSize)
 
-        print("startIndex,endIndex: ",self.segmentStartIndex," ",self.segmentEndIndex-1)
+        #print("startIndex,endIndex: ",self.segmentStartIndex," ",self.segmentEndIndex-1)
 
         print("seg: ",len(self.seg))
+        
 
+        '''
         self.interval = self.set_interval(self.segmentStartIndex,self.segmentEndIndex)
         print("interval: ",self.interval.shape)
         #delete
         print("interval value:",self.interval[0])
         
-        self.set_segmentIntervalSync(2)
+        self.set_segmentIntervalSync(3)
         print("startIndex: ",self.intervalStartIndex," ")
         print("seg,interval: ",len(self.seg)," ",len(self.interval))
+
+        '''
        
         
     
@@ -128,6 +132,9 @@ class ecg_segment:
             value = np.empty(n)
             prevInterval = np.empty(n)
             averageInterval = np.empty(n)
+            
+            times_m = np.empty(n,dtype=float)
+            times_s = np.empty(n,dtype=float)
             
 
             #(rpeak 값 추출)
@@ -158,7 +165,19 @@ class ecg_segment:
                         cnt = cnt + (sample[j+1] - sample[j])/360
                     averageInterval[i] = cnt / 10
 
-            tmp = np.stack((sample,symbol,value,prevInterval,averageInterval),axis=1)
+
+            #times 추출 
+            for i in range(n):
+                m = sample[i] // 360
+                s = ( sample[i] % 360 ) / 360
+
+                times_m[i] = m
+                times_s[i] = s
+
+
+                print("0706_",self.file_name,i,sample[i],symbol[i],times_m[i],times_s[i])
+
+            tmp = np.stack((sample,symbol,value,prevInterval,averageInterval,times_m,times_s),axis=1)
 
             return tmp
 
@@ -200,8 +219,9 @@ class ecg_segment:
         non_beat = np.empty([])
 
         n = len(self.tmp)
-
-        tmp = self.tmp[:,0:3]
+        
+        size = len(self.tmp[0])
+        tmp = self.tmp[:,0:size]
 
         if self.ver=='aami':   
             for i in range(n):
@@ -243,8 +263,10 @@ class ecg_segment:
                 else:
                     non_beat = np.append(non_beat,tmp[i])
 
-        beat = beat[1:].reshape(-1,3)
-        non_beat = non_beat[1:].reshape(-1,3)
+        beat = beat[1:].reshape(-1,size)
+        non_beat = non_beat[1:].reshape(-1,size)
+
+        print("0705_size",size)
         
         return beat,non_beat
 
@@ -252,8 +274,11 @@ class ecg_segment:
     def set_segment(self,leftWindow,rightWindow):
         segment = []
         
+
+        
         size = len(self.beat)
         for i in range(size):
+            '''
             sepfrom = int(self.beat[i][0])-leftWindow
             septo = int(self.beat[i][0])+rightWindow
 
@@ -268,10 +293,15 @@ class ecg_segment:
                 resample = self.record[sepfrom:septo]
             else:
                 resample = signal.resample(self.record[sepfrom:septo],self.resample_seg_size)
-                
-            segment.append({'record':resample,
-                        'annotation':self.beat[i][1]
+            '''  
+            
+            segment.append({'record':self.beat[i][0],
+                        'annotation':self.beat[i][1],
+                        'time_m':self.beat[i][5],
+                        'time_s':self.beat[i][6]
                         }) 
+
+            
         return segment
 
     def set_interval(self,start,end):
@@ -302,7 +332,8 @@ class ecg_segment:
             
             self.seg = self.seg[self.intervalStartIndex:]
             self.interval = self.interval[self.intervalStartIndex:]
-
+        elif(ver==3):
+            pass
         else:
             raise TypeError("not support interval mode")
         
@@ -310,6 +341,7 @@ class ecg_segment:
         
 #mitbih 파일 경로 겹치는 오류 
     def output_segment(self,path,img = False):
+        
         print("output")
         ann = []
         if self.ver=='mitbih':
@@ -324,6 +356,12 @@ class ecg_segment:
 
         #type1:101,102
         path1 = path+"\\"+"files"+"\\"+str(self.file_name)
+        if isdir(path+"\\"+"files") == False:
+            makedirs(path+"\\"+"files")
+
+       
+
+        '''
         path1_1 = path1+"\\"+"all"
         path1_2 = path1+"\\"+"ann"
         if isdir(path1) == False:
@@ -344,8 +382,11 @@ class ecg_segment:
         for i in range(len(self.seg)):
             record = self.seg[i]['record']
             ann = self.seg[i]['annotation']
+            time_m = self.seg[i]['time_m']
+            time_s = self.seg[i]['time_s']
+
             
-            data = np.append(record,ann)
+            data = np.append(record,ann,time_m,time_s)
             data = pd.DataFrame(data)
 
             name = str(self.file_name)+"_"+str(i)+".csv"
@@ -358,6 +399,14 @@ class ecg_segment:
                 plt.plot(record)
                 plt.savefig(path2+"\\"+ann+"\\"+"img"+"\\"+name+".jpg")
                 plt.cla() 
+        '''
+
+        df = pd.DataFrame(self.seg)
+        print(df)
+
+        print(len(df))
+        df.to_csv(path1+".csv",index = None, float_format="%.4f")
+        
 
 
     def output_interval(self,path):
@@ -369,7 +418,7 @@ class ecg_segment:
             makedirs(path2)
         
         data = pd.DataFrame(self.interval).astype(float)
-        data.to_csv(path2+"\\"+"interval.csv",float_format='%.3f',columns=None,index=None)
+        data.to_csv(path2+"\\"+"interval.csv",columns=None,index=None)
 
         
      

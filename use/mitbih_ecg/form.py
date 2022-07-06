@@ -86,19 +86,23 @@ class ecg_segment:
 
 
 
-        self.tmp = self.re_ann(self.intervalN)
+        self.tmp = self.re_ann(self.intervalN,2)
+        print("tmp: ",len(self.tmp))
 
         self.beat , self.non_beat = self.set_annotation()
-
-
-        print("tmp: ",len(self.tmp))
+    
         self.seg = self.set_segment(leftSegSize,rightSegSize)
 
         print("startIndex,endIndex: ",self.segmentStartIndex," ",self.segmentEndIndex-1)
+
         print("seg: ",len(self.seg))
+
         self.interval = self.set_interval(self.segmentStartIndex,self.segmentEndIndex)
-        print("interval: ",len(self.interval))
-        self.set_segmentIntervalSync()
+        print("interval: ",self.interval.shape)
+        #delete
+        print("interval value:",self.interval[0])
+        
+        self.set_segmentIntervalSync(2)
         print("startIndex: ",self.intervalStartIndex," ")
         print("seg,interval: ",len(self.seg)," ",len(self.interval))
        
@@ -115,47 +119,80 @@ class ecg_segment:
         plt.plot(np.arange(self.get_record().size),self.get_record(),self.get_annotation()[0],self.get_annotation()[2],"o")
     
 
-    def re_ann(self,intervalN):
-        n = len(self.annotation.sample)
+    def re_ann(self,intervalN,ver):
+        if(ver==1):
+            n = len(self.annotation.sample)
 
-        sample = self.annotation.sample
-        symbol = self.annotation.symbol
-        value = np.empty(n)
-        prevInterval = np.empty(n)
-        averageInterval = np.empty(n)
-        
+            sample = self.annotation.sample
+            symbol = self.annotation.symbol
+            value = np.empty(n)
+            prevInterval = np.empty(n)
+            averageInterval = np.empty(n)
+            
 
-        #(rpeak 값 추출)
-        for i in range(n):
-            value[i] = self.record[sample[i]]
+            #(rpeak 값 추출)
+            for i in range(n):
+                value[i] = self.record[sample[i]]
 
-        #prevInterval값 추출
+            #prevInterval값 추출
 
-        for i in range(n):
-            flag = i-1
-            if(flag<0):
-                prevInterval[i] = -1
-            else:
-                cnt = 0
+            for i in range(n):
+                flag = i-1
+                if(flag<0):
+                    prevInterval[i] = -1
+                else:
+                    cnt = 0
+                    for j in range(flag,i):
+                        cnt = cnt + (sample[j+1] - sample[j])/360
+                    prevInterval[i] = cnt 
+
+            
+            #Averageinterval값 추출 
+            for i in range(n):
+                flag = i-(intervalN)
+                if(flag<0):
+                    averageInterval[i] = -1
+                else:
+                    cnt = 0
+                    for j in range(flag,i):
+                        cnt = cnt + (sample[j+1] - sample[j])/360
+                    averageInterval[i] = cnt / 10
+
+            tmp = np.stack((sample,symbol,value,prevInterval,averageInterval),axis=1)
+
+            return tmp
+
+        elif(ver==2):
+            n = len(self.annotation.sample)
+            sample = self.annotation.sample
+            symbol = self.annotation.symbol
+            value = np.empty(n)
+            prevInterval = np.empty((n,intervalN))
+ 
+            for i in range(n):
+                flag = i-(intervalN)
+                f = 0
                 for j in range(flag,i):
-                    cnt = cnt + (sample[j+1] - sample[j])/360
-                prevInterval[i] = cnt 
+                    if(j<0):
+                        prevInterval[i][f] = -1
+                    else:
+                        cnt = 0
+                        cnt = (sample[j+1] - sample[j])/360
+                        prevInterval[i][f] = cnt
+                    f+=1
+            
+            tmp = np.stack((sample,symbol,value),axis=1)
+            print("tmp1,",tmp.shape)
+            tmp2 = np.column_stack([tmp,prevInterval])
+            print("tmp2:",tmp2.shape)
 
+            return tmp2
+            
 
-        #Averageinterval값 추출 
-        for i in range(n):
-            flag = i-(intervalN)
-            if(flag<0):
-                averageInterval[i] = -1
-            else:
-                cnt = 0
-                for j in range(flag,i):
-                    cnt = cnt + (sample[j+1] - sample[j])/360
-                averageInterval[i] = cnt / 10
+        else:
+            raise TypeError("not support interval mode")
+      
 
-        tmp = np.stack((sample,symbol,value,prevInterval,averageInterval),axis=1)
-
-        return tmp
 
     #set 
     def set_annotation(self):
@@ -239,21 +276,35 @@ class ecg_segment:
 
     def set_interval(self,start,end):
         interval = self.tmp[start:end,3:]
-
         return interval 
 
-    def set_segmentIntervalSync(self):
-        indexTmp = None
-        for i in range(len(self.interval)):
-            if(float(self.interval[i][1]) != -1):
-                indexTmp=i
-                break
-        
-        self.intervalStartIndex = indexTmp
-        
-        self.seg = self.seg[self.intervalStartIndex:]
-        self.interval = self.interval[self.intervalStartIndex:]
+    def set_segmentIntervalSync(self,ver):
 
+        if (ver==1):
+            indexTmp = None
+            for i in range(len(self.interval)):
+                if(float(self.interval[i][1]) != -1):
+                    indexTmp=i
+                    break
+            
+            self.intervalStartIndex = indexTmp
+            
+            self.seg = self.seg[self.intervalStartIndex:]
+            self.interval = self.interval[self.intervalStartIndex:]
+        elif(ver==2):
+            indexTmp = None
+            for i in range(len(self.interval)):
+                if(float(self.interval[i][0]) != -1):
+                    indexTmp=i
+                    break
+            
+            self.intervalStartIndex = indexTmp
+            
+            self.seg = self.seg[self.intervalStartIndex:]
+            self.interval = self.interval[self.intervalStartIndex:]
+
+        else:
+            raise TypeError("not support interval mode")
         
 
         

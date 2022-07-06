@@ -95,4 +95,55 @@ def toDataframe_interval(p):
         
 
 
+def toDataframe_interval10(p):
+    p1 = p + "\\" + "files"
+    dir = sorted(Path(p1).iterdir(), key=os.path.getmtime)
+
+    #초기 작업 (파일 개수 / 배열 초기화)
+    n = 0
+    exampleFile = None
+    for p2 in dir:
+        pD = p2 / 'all'
+        f = list(Path.iterdir(pD))
+        n+=len(f)
+
+        if(p2==dir[-1]):
+            exampleFile = pd.read_csv(f[-1])
+    
+    exampleFile = exampleFile.to_numpy().flatten()
+    print(exampleFile)
+
+
+    #파일 읽기 
+    x = np.empty((n,exampleFile.size+10-1),dtype=float)
+    y = np.empty(n,dtype=Str)
+
+    cnt = 0
+    for p2 in dir:
+        print(p2)
+        print("====================")
+        pD = p2 / 'all'
+        pI = p2 / 'interval' 
+
+        fD = list(Path.iterdir(pD))
+        fI = list(Path.iterdir(pI))
+        fI = pd.read_csv(fI[0]).to_numpy()
+
+        print(len(fD))
+        print(fI.size)
+        for i in range(len(fD)):
+            print(fD[i])
+            d = pd.read_csv(fD[i]).to_numpy().flatten()
+            x[cnt+i][0:-10] = d[0:-1]
+            x[cnt+i][-10:] = fI[i]
+            y[cnt+i] = d[-1]
+        
+        cnt+=len(fD)
+
+
+    return x,y
+        
+
+
+
 
